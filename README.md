@@ -34,16 +34,21 @@ node build.mjs
 - **Pretendard CDN 링크 제거** — 호스팅 환경의 CSP가 Google Fonts 외 폰트 호스트를 차단하므로,
   Noto Sans KR·Apple SD Gothic Neo 폴백으로 넘깁니다. `index.html`에는 Pretendard가 그대로 있습니다.
 
-## 호스팅 현황
+## 공개 주소
 
-Claude Artifact로 올린 페이지: <https://claude.ai/code/artifact/cf8a2a2a-79f0-45e4-bb95-23324170b8a2>
-(현재 프레임 서비스가 약 41KB를 넘는 페이지를 렌더링하지 못해 빈 화면으로 나옵니다.
-같은 접두부를 41KB로 자르면 정상, 57KB 순수 텍스트로 늘리면 실패하는 것을 확인했습니다.
-`/api/frame/*` 엔드포인트도 503을 반환 중이라 서비스 측 문제로 보입니다.
-서비스가 회복되면 `node build.mjs` 후 같은 URL로 다시 올리면 됩니다.)
+<https://rosookwan.github.io/oasis-tennis/>
 
-실서비스로 올릴 때는 `index.html` + `assets/`를 그대로 정적 호스팅에 올리면 됩니다
-(GitHub Pages, Netlify, Vercel, Cloudflare Pages 등). 빌드 단계가 필요 없습니다.
+GitHub Pages(`main` 브랜치 루트)로 서비스합니다. `index.html`과 `assets/`가 그대로 올라가므로
+빌드 단계가 없습니다 — 수정 후 push하면 1~2분 안에 반영됩니다.
+
+```bash
+git add -A && git commit -m "..." && git push
+```
+
+Claude Artifact로도 올려 두었지만(<https://claude.ai/code/artifact/cf8a2a2a-79f0-45e4-bb95-23324170b8a2>)
+현재 프레임 서비스가 약 41KB를 넘는 페이지를 렌더링하지 못해 빈 화면으로 나옵니다.
+(같은 접두부를 41KB로 자르면 정상, 57KB 순수 텍스트로 늘리면 실패. `/api/frame/*`도 503 반환 중.)
+서비스가 회복되면 `node build.mjs` 후 같은 URL로 다시 올리면 됩니다.
 
 ## 운영자 확인 목록
 
