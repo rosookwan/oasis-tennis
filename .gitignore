@@ -1,0 +1,8 @@
+.DS_Store
+
+# Build output — regenerate with `node build.mjs`
+dist/
+
+# Imported Claude Design source and the Wanted Design System bundle.
+# Reference material only; the site does not load anything from here.
+design-src/
