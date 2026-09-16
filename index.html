@@ -181,13 +181,12 @@ section[id]{scroll-margin-top:88px}
   position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;
   display:flex;align-items:flex-end;background:var(--ink);
 }
-.hero-img{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover}
+.hero-img{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 55%;will-change:transform,opacity}
+/* 사진 → (확대·페이드) → 영상 → (페이드) → 사진. 진행률에 따라 JS가 opacity·scale을 직접 넣는다 */
 .hero-video{
   position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;
-  opacity:0;transition:opacity .4s ease;
+  opacity:0;will-change:opacity;
 }
-.hero.is-video .hero-video{opacity:1}
-.hero.is-video .hero-img{opacity:0}
 .hero-copy{transition:opacity .25s ease,transform .25s ease;will-change:opacity}
 .hero.is-video .hero-copy[data-hide="1"]{opacity:0;transform:translateY(8px);pointer-events:none}
 .scroll-hint{
@@ -1194,6 +1193,21 @@ section[id]{scroll-margin-top:88px}
 
     var duration = 0, target = 0, shown = -1, raf = 0, ready = false;
     var lastP = -1;
+    var img = hero.querySelector('.hero-img');
+    // 구간: 0~IN 사진이 확대되며 영상으로 페이드인 → IN~OUT 영상 재생 → OUT~1 영상이 사라지며 사진으로 복귀
+    var IN = 0.14, OUT = 0.88, ZOOM = 1.14;
+    function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+    function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+    function blend(p) {
+      // 영상 불투명도 0→1→0, 사진은 확대됐다가(영상 구간엔 확대 유지) 돌아온다
+      var vis, scale;
+      if (p < IN) { vis = ease(clamp01(p / IN)); scale = 1 + (ZOOM - 1) * vis; }
+      else if (p < OUT) { vis = 1; scale = ZOOM; }
+      else { vis = 1 - ease(clamp01((p - OUT) / (1 - OUT))); scale = 1 + (ZOOM - 1) * vis; }
+      video.style.opacity = vis;
+      if (img) { img.style.transform = 'scale(' + scale.toFixed(4) + ')'; img.style.opacity = 1; }
+    }
+    function videoProgress(p) { return clamp01((p - IN) / (OUT - IN)); }
 
     function progress() {
       var rect = hero.getBoundingClientRect();
@@ -1215,8 +1229,9 @@ section[id]{scroll-margin-top:88px}
       var p = progress();
       if (p === lastP) return;
       lastP = p;
-      target = p * duration;
-      if (copy) copy.dataset.hide = (p > 0.28 && p < 0.86) ? '1' : '0';
+      target = videoProgress(p) * duration;
+      blend(p);
+      if (copy) copy.dataset.hide = (p > 0.2 && p < 0.9) ? '1' : '0';
       if (hint) hint.dataset.hide = p > 0.04 ? '1' : '0';
       if (!raf) raf = requestAnimationFrame(paint);
     }
