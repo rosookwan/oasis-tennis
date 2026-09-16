@@ -175,7 +175,38 @@ section[id]{scroll-margin-top:88px}
   position:relative;min-height:clamp(520px,52vw,760px);
   display:flex;align-items:flex-end;overflow:hidden;background:var(--ink);
 }
+/* 스크롤 스크럽: 섹션을 길게 두고, 안쪽 무대(.hero-stage)를 화면에 고정한 채 스크롤 양만큼 영상을 재생한다 */
+.hero--scrub{display:block;height:320vh;min-height:0;overflow:visible}
+.hero-stage{
+  position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;
+  display:flex;align-items:flex-end;background:var(--ink);
+}
 .hero-img{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover}
+.hero-video{
+  position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .4s ease;
+}
+.hero.is-video .hero-video{opacity:1}
+.hero.is-video .hero-img{opacity:0}
+.hero-copy{transition:opacity .25s ease,transform .25s ease;will-change:opacity}
+.hero.is-video .hero-copy[data-hide="1"]{opacity:0;transform:translateY(8px);pointer-events:none}
+.scroll-hint{
+  position:absolute;left:50%;bottom:22px;z-index:3;transform:translateX(-50%);
+  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;
+  background:rgba(39,40,52,.55);color:var(--on-dark-82);font-size:12.5px;letter-spacing:.02em;
+  backdrop-filter:blur(10px);transition:opacity .3s ease;pointer-events:none;
+}
+.scroll-hint .wheel{
+  width:16px;height:26px;border:1.5px solid rgba(255,255,255,.75);border-radius:9px;position:relative;
+}
+.scroll-hint .wheel::after{
+  content:"";position:absolute;left:50%;top:5px;width:3px;height:6px;margin-left:-1.5px;border-radius:2px;
+  background:#fff;animation:hint-wheel 1.6s ease-in-out infinite;
+}
+@keyframes hint-wheel{0%{transform:translateY(0);opacity:1}70%{transform:translateY(9px);opacity:0}100%{opacity:0}}
+.hero.is-video .scroll-hint[data-hide="1"]{opacity:0}
+.hero:not(.is-video) .scroll-hint{display:none}
+@media (max-width:760px){.hero--scrub{height:260vh}}
 .scrim{position:absolute;z-index:1;pointer-events:none}
 .scrim-side{
   inset:0;
@@ -463,6 +494,8 @@ section[id]{scroll-margin-top:88px}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  .hero--scrub{height:auto;min-height:clamp(520px,52vw,760px);display:flex}
+  .hero-stage{position:relative;height:auto;min-height:clamp(520px,52vw,760px);width:100%}
 }
 </style>
 </head>
@@ -531,10 +564,14 @@ section[id]{scroll-margin-top:88px}
 
 <main id="main">
 
-<section class="hero" id="top">
+<section class="hero hero--scrub" id="top" data-scrub="assets/video/oasis-hero.mp4" data-scrub-mobile="assets/video/oasis-hero-720.mp4">
+ <div class="hero-stage">
   <img class="hero-img" src="assets/oasis-hero.webp" alt="산으로 둘러싸인 오아시스 테니스 전경 — 인조잔디 위 파란 코트 4면과 클럽하우스, 넓은 주차장" fetchpriority="high">
+  <!-- 마우스 휠·스크롤 양만큼 재생되는 배경 영상. JS가 붙이기 전·실패 시엔 위 사진이 보인다. -->
+  <video class="hero-video" id="heroVideo" muted playsinline preload="auto" poster="assets/oasis-hero-poster.jpg" aria-hidden="true" tabindex="-1"></video>
   <div class="scrim scrim-side"></div>
   <div class="scrim scrim-foot"></div>
+  <div class="scroll-hint" id="scrollHint" aria-hidden="true"><span class="wheel"></span>스크롤하면 공이 날아가요</div>
   <div class="hero-inner">
     <div class="hero-copy">
       <span class="hero-eyebrow">Open Air · Blue Court · Namyangju Byeolnae</span>
@@ -555,6 +592,7 @@ section[id]{scroll-margin-top:88px}
       </div>
     </div>
   </div>
+ </div>
 </section>
 
 <section class="facts" aria-label="주요 정보 요약">
@@ -741,6 +779,77 @@ section[id]{scroll-margin-top:88px}
     </div>
   </div>
 </section>
+
+
+<!-- 온라인 신청 폼 — 서버에 둔 /courtdesk-config.js 가 window.COURTDESK_API 를 문자열로 정의하면 켜진다.
+     같은 도메인에서 API를 프록시하므로 값은 빈 문자열("")이면 된다. 파일이 없으면(정적 배포·미리보기) 폼은 숨겨진다. -->
+<script src="courtdesk-config.js"></script>
+<section id="apply" style="background:var(--surface)" aria-labelledby="apply-h" hidden>
+  <div class="shell band">
+    <div class="intro">
+      <span class="eyebrow">Apply</span>
+      <h2 class="h2" id="apply-h">레슨 온라인 신청</h2>
+      <p class="lede">아래 내용을 남겨 주시면 확인 후 연락드립니다. 체험 수업 일정도 함께 안내해 드려요.</p>
+    </div>
+    <form id="apply-form" class="panel" style="display:grid;gap:14px;max-width:560px" novalidate>
+      <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+      <div class="grid g-300" style="gap:12px">
+        <label class="stack" style="gap:6px"><span>이름 (수강자)</span><input class="input" name="child_name" required maxlength="40" placeholder="예: 김서연"></label>
+        <label class="stack" style="gap:6px"><span>나이</span><input class="input" name="child_age" type="number" min="3" max="99" placeholder="예: 9"></label>
+      </div>
+      <div class="grid g-300" style="gap:12px">
+        <label class="stack" style="gap:6px"><span>보호자 이름 (성인은 본인)</span><input class="input" name="guardian_name" maxlength="40"></label>
+        <label class="stack" style="gap:6px"><span>연락처</span><input class="input" name="phone" type="tel" required placeholder="010-0000-0000"></label>
+      </div>
+      <div class="grid g-300" style="gap:12px">
+        <label class="stack" style="gap:6px"><span>희망 프로그램</span><select class="input" name="program_hint"><option>주니어반</option><option>성인반</option><option>개인레슨</option><option>체험 레슨</option></select></label>
+        <label class="stack" style="gap:6px"><span>희망 시간</span><input class="input" name="time_hint" maxlength="80" placeholder="예: 평일 16시 이후 · 주말 오전"></label>
+      </div>
+      <label class="stack" style="gap:6px"><span>남기실 말</span><textarea class="input" name="memo" rows="3" maxlength="300"></textarea></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:14px"><input type="checkbox" name="privacy_consent" required style="margin-top:3px"><span>개인정보 수집·이용에 동의합니다. 상담·수업 안내 목적으로만 사용하며, 등록하지 않으면 3개월 후 파기합니다.</span></label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" type="submit">신청 보내기</button>
+        <span id="apply-msg" role="status" style="font-size:14px"></span>
+      </div>
+    </form>
+  </div>
+</section>
+<script>
+(function () {
+  var api = window.COURTDESK_API;
+  var section = document.getElementById("apply");
+  if (typeof api !== "string" || !section) return;
+  section.hidden = false;
+  var form = document.getElementById("apply-form");
+  var msg = document.getElementById("apply-msg");
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    var data = new FormData(form);
+    var body = {
+      branch: "oasis",
+      child_name: data.get("child_name"),
+      child_age: data.get("child_age") ? Number(data.get("child_age")) : null,
+      guardian_name: data.get("guardian_name") || "",
+      phone: data.get("phone"),
+      program_hint: data.get("program_hint"),
+      time_hint: data.get("time_hint") || null,
+      memo: data.get("memo") || null,
+      privacy_consent: !!data.get("privacy_consent"),
+      website: data.get("website") || ""
+    };
+    msg.textContent = "보내는 중…";
+    fetch(api.replace(/\/$/, "") + "/api/public/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.j && res.j.detail ? (typeof res.j.detail === "string" ? res.j.detail : "입력 내용을 확인해 주세요") : "오류");
+        form.reset();
+        msg.textContent = "신청이 접수됐어요. 확인 후 연락드릴게요.";
+      })
+      .catch(function (err) { msg.textContent = "전송하지 못했어요 — " + err.message + " · 전화로 문의해 주세요."; });
+  });
+})();
+</script>
 
 <section id="facility" class="facility" aria-labelledby="facility-h">
   <div class="shell band">
@@ -1069,6 +1178,86 @@ section[id]{scroll-margin-top:88px}
       btn.setAttribute('aria-expanded', 'true');
     }
   });
+
+  // Hero: 스크롤(마우스 휠·터치) 양만큼 배경 영상을 재생한다
+  (function scrubHero() {
+    var hero = document.getElementById('top');
+    var video = document.getElementById('heroVideo');
+    var copy = hero && hero.querySelector('.hero-copy');
+    var hint = document.getElementById('scrollHint');
+    if (!hero || !video) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!('currentTime' in video)) return;
+
+    var mobile = window.matchMedia('(max-width: 760px)').matches;
+    video.src = mobile ? hero.dataset.scrubMobile : hero.dataset.scrub;
+
+    var duration = 0, target = 0, shown = -1, raf = 0, ready = false;
+    var lastP = -1;
+
+    function progress() {
+      var rect = hero.getBoundingClientRect();
+      var track = hero.offsetHeight - window.innerHeight;
+      if (track <= 0) return 0;
+      var p = -rect.top / track;
+      return p < 0 ? 0 : p > 1 ? 1 : p;
+    }
+    function paint() {
+      raf = 0;
+      if (!ready) return;
+      // 목표 시간으로 부드럽게 따라간다 (휠 한 칸에 툭툭 끊기지 않게)
+      var diff = target - shown;
+      if (Math.abs(diff) < 1 / 60) { shown = target; }
+      else { shown += diff * 0.22; raf = requestAnimationFrame(paint); }
+      video.currentTime = shown;
+    }
+    function onScroll() {
+      var p = progress();
+      if (p === lastP) return;
+      lastP = p;
+      target = p * duration;
+      if (copy) copy.dataset.hide = (p > 0.28 && p < 0.86) ? '1' : '0';
+      if (hint) hint.dataset.hide = p > 0.04 ? '1' : '0';
+      if (!raf) raf = requestAnimationFrame(paint);
+    }
+    var swapped = false;
+    function seekableEnough() {
+      try { return video.seekable.length > 0 && video.seekable.end(0) >= (video.duration || 10) - 0.5; }
+      catch (e) { return false; }
+    }
+    function start() {
+      if (ready) return;
+      // Range 요청을 못 받는 서버(단순 정적 서버 등)면 탐색이 안 된다 → 파일을 통째로 받아 blob으로 바꿔 끼운다
+      if (!seekableEnough() && !swapped && window.fetch && window.URL && URL.createObjectURL) {
+        swapped = true;
+        fetch(video.currentSrc || video.src).then(function (r) { return r.blob(); }).then(function (b) {
+          video.src = URL.createObjectURL(b);
+        }, function () { ready = false; });
+        return;
+      }
+      ready = true;
+      duration = video.duration || 10;
+      video.pause();
+      hero.classList.add('is-video');
+      shown = 0;
+      lastP = -1;
+      onScroll();
+    }
+    video.addEventListener('loadedmetadata', start);
+    video.addEventListener('error', function () { hero.classList.remove('is-video'); ready = false; });
+    // iOS는 한 번 재생 시도가 있어야 탐색이 매끄럽다
+    var primed = false;
+    function prime() {
+      if (primed) return; primed = true;
+      var p = video.play();
+      if (p && p.then) p.then(function () { video.pause(); }, function () {});
+      else video.pause();
+    }
+    window.addEventListener('touchstart', prime, { once: true, passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () { lastP = -1; onScroll(); });
+    if (video.readyState >= 1) start();
+  })();
 
   // Copy address
   var ADDRESS = '경기 남양주시 별내면 청학로응달길 51-63';

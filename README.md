@@ -9,6 +9,7 @@ Claude Design 프로젝트 [`Oasis Tennis.dc.html`](https://claude.ai/design/p/a
 ```
 index.html      사이트 본체. 의존성 없는 단일 HTML (CSS·JS·아이콘 스프라이트 인라인)
 assets/         코트·시설 사진 11장 (webp) — 디자인 프로젝트에서 추출
+assets/video/   메인 배경 영상 (oasis-hero.mp4 1080p · oasis-hero-720.mp4 모바일) — 스크롤 양만큼 재생되는 스크럽 영상
 build.mjs       dist/artifact.html 생성 (이미지 data URI 인라인 + 호스팅용 조각으로 변환)
 dist/           배포 산출물
 design-src/     원본 Claude Design 소스와 Wanted Design System 토큰 (참고용)
@@ -81,3 +82,14 @@ http://localhost:8000/?todo=1
 | `word-break: keep-all` | 한글이 어절 중간에서 끊기는 것을 막습니다 |
 
 > 이 저장소는 배포 미러입니다. 개발·수정은 courtdesk monorepo(`sites/oasis/`)에서 하고 `scripts/deploy-oasis.sh`로 발행하세요.
+
+## 메인 배경 영상 (스크롤 스크럽)
+
+히어로의 영상은 재생되는 게 아니라 마우스 휠·터치 스크롤 양만큼 앞뒤로 움직인다(`index.html`의 `scrubHero`).
+- 섹션 높이 320vh(모바일 260vh) 동안 무대가 화면에 고정되고, 스크롤 진행률 × 10초를 `currentTime`으로 넣는다.
+- 영상은 탐색이 부드럽도록 키프레임 4프레임 간격으로 다시 인코딩했다. 교체할 때는
+  `ffmpeg -i 원본.mp4 -an -c:v libx264 -crf 25 -g 4 -keyint_min 4 -sc_threshold 0 -pix_fmt yuv420p -movflags +faststart assets/video/oasis-hero.mp4`
+  (720p는 `-vf scale=1280:720`). 포스터는 `assets/oasis-hero-poster.jpg`.
+- 서버가 HTTP Range를 못 주면(파이썬 `http.server` 등) 탐색이 안 되므로 스크립트가 파일을 통째로 받아 blob으로 바꿔 끼운다. nginx·GitHub Pages는 Range를 지원한다.
+- `prefers-reduced-motion`이면 스크럽을 끄고 사진 히어로로 보인다. 영상 로드 실패 시에도 사진으로 남는다.
+- `build.mjs`는 mp4를 인라인하지 않는다 — 호스팅된 `dist/artifact.html`에서는 사진 히어로가 보인다.

@@ -39,6 +39,8 @@ let out = `${keptHead}\n${body}`.replace(
 
 let inlined = 0;
 out = out.replace(/src="(assets\/[^"]+)"/g, (_, path) => {
+  // 배경 영상(mp4)은 data URI로 넣기엔 커서 그대로 둔다 — 호스팅된 조각에서는 영상 대신 사진이 보인다.
+  if (extname(path) === '.mp4') return `src="${path}"`;
   const mime = MIME[extname(path)];
   if (!mime) throw new Error(`no mime type for ${path}`);
   inlined++;
