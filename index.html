@@ -175,10 +175,12 @@ section[id]{scroll-margin-top:88px}
   position:relative;min-height:clamp(520px,52vw,760px);
   display:flex;align-items:flex-end;overflow:hidden;background:var(--ink);
 }
-/* 스크롤 스크럽: 섹션을 길게 두고, 안쪽 무대(.hero-stage)를 화면에 고정한 채 스크롤 양만큼 영상을 재생한다 */
-.hero--scrub{display:block;height:320vh;min-height:0;overflow:visible}
+/* 헤더 아래에 처음부터 고정한다. svh로 모바일 주소창 변화에 따른 장면 점프를 막는다. */
+.hero--scrub{--hero-bottom:0px;display:block;height:900vh;height:900svh;min-height:0;overflow:visible}
 .hero-stage{
-  position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;
+  position:sticky;top:var(--head-h);
+  height:calc(100vh - var(--head-h) - var(--hero-bottom));
+  height:calc(100svh - var(--head-h) - var(--hero-bottom));overflow:hidden;
   display:flex;align-items:flex-end;background:var(--ink);
 }
 .hero-img{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 55%;will-change:transform,opacity}
@@ -191,7 +193,7 @@ section[id]{scroll-margin-top:88px}
 .hero.is-video .hero-copy[data-hide="1"]{opacity:0;transform:translateY(8px);pointer-events:none}
 .scroll-hint{
   position:absolute;left:50%;bottom:22px;z-index:3;transform:translateX(-50%);
-  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;
+  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;white-space:nowrap;
   background:rgba(39,40,52,.55);color:var(--on-dark-82);font-size:12.5px;letter-spacing:.02em;
   backdrop-filter:blur(10px);transition:opacity .3s ease;pointer-events:none;
 }
@@ -205,7 +207,10 @@ section[id]{scroll-margin-top:88px}
 @keyframes hint-wheel{0%{transform:translateY(0);opacity:1}70%{transform:translateY(9px);opacity:0}100%{opacity:0}}
 .hero.is-video .scroll-hint[data-hide="1"]{opacity:0}
 .hero:not(.is-video) .scroll-hint{display:none}
-@media (max-width:760px){.hero--scrub{height:260vh}}
+@media (max-width:899px){.hero--scrub{--hero-bottom:calc(68px + env(safe-area-inset-bottom))}}
+@media (max-width:760px){.hero--scrub{height:700vh;height:700svh}}
+.hero--scrub.is-static{height:auto;min-height:clamp(520px,52vw,760px);display:flex}
+.hero--scrub.is-static .hero-stage{position:relative;top:0;height:auto;min-height:clamp(520px,52vw,760px);width:100%}
 .scrim{position:absolute;z-index:1;pointer-events:none}
 .scrim-side{
   inset:0;
@@ -217,7 +222,7 @@ section[id]{scroll-margin-top:88px}
 }
 .hero-inner{
   position:relative;z-index:2;width:100%;max-width:var(--shell);margin:0 auto;
-  padding:clamp(80px,9vw,140px) var(--gutter) clamp(36px,4.4vw,64px);
+  padding:clamp(80px,9vw,140px) var(--gutter) 76px;
 }
 .hero-copy{max-width:660px;display:flex;flex-direction:column;gap:22px}
 .hero-eyebrow{
@@ -236,6 +241,18 @@ section[id]{scroll-margin-top:88px}
   border-radius:var(--r-full);background:rgba(255,255,255,.10);backdrop-filter:blur(64px);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);
   color:rgba(255,255,255,.92);font-size:13px;font-weight:600;
+}
+/* 높이가 작은 휴대폰에서도 제목·예약 링크·전경 안내를 한 화면 안에 둔다. */
+@media (max-width:760px) and (max-height:700px){
+  .hero-inner{padding-top:16px;padding-bottom:70px}
+  .hero-copy{gap:10px}
+  .hero-eyebrow{font-size:10px;letter-spacing:.14em}
+  .hero h1{font-size:24px;line-height:1.2}
+  .hero p{font-size:13px;line-height:1.5}
+  .hero .btn-row{gap:8px}
+  .hero .btn{flex:1;padding-inline:8px;font-size:13px;height:44px}
+  .hero .chips{gap:6px;margin-top:0}
+  .hero .chip{font-size:11px;min-height:28px;padding:4px 8px;gap:4px}
 }
 
 /* ─── Facts strip ────────────────────────────────────────────────── */
@@ -494,7 +511,7 @@ section[id]{scroll-margin-top:88px}
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   .hero--scrub{height:auto;min-height:clamp(520px,52vw,760px);display:flex}
-  .hero-stage{position:relative;height:auto;min-height:clamp(520px,52vw,760px);width:100%}
+  .hero-stage{position:relative;top:0;height:auto;min-height:clamp(520px,52vw,760px);width:100%}
 }
 </style>
 </head>
@@ -563,7 +580,7 @@ section[id]{scroll-margin-top:88px}
 
 <main id="main">
 
-<section class="hero hero--scrub" id="top" data-scrub="assets/video/oasis-hero.mp4" data-scrub-mobile="assets/video/oasis-hero-720.mp4">
+<section class="hero hero--scrub" id="top" data-scrub="assets/video/oasis-hero.mp4?v=20260917-scrub" data-scrub-mobile="assets/video/oasis-hero-720.mp4?v=20260917-scrub">
  <div class="hero-stage">
   <img class="hero-img" src="assets/oasis-hero.webp" alt="산으로 둘러싸인 오아시스 테니스 전경 — 인조잔디 위 파란 코트 4면과 클럽하우스, 넓은 주차장" fetchpriority="high">
   <!-- 마우스 휠·스크롤 양만큼 재생되는 배경 영상. JS가 붙이기 전·실패 시엔 위 사진이 보인다. -->
@@ -1182,96 +1199,117 @@ section[id]{scroll-margin-top:88px}
   (function scrubHero() {
     var hero = document.getElementById('top');
     var video = document.getElementById('heroVideo');
-    var copy = hero && hero.querySelector('.hero-copy');
-    var hint = document.getElementById('scrollHint');
     if (!hero || !video) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (!('currentTime' in video)) return;
-
-    var mobile = window.matchMedia('(max-width: 760px)').matches;
-    video.src = mobile ? hero.dataset.scrubMobile : hero.dataset.scrub;
-
-    var duration = 0, target = 0, shown = -1, raf = 0, ready = false;
-    var lastP = -1;
+    var stage = hero.querySelector('.hero-stage');
+    var copy = hero.querySelector('.hero-copy');
+    var hint = document.getElementById('scrollHint');
     var img = hero.querySelector('.hero-img');
-    // 구간: 0~IN 사진이 확대되며 영상으로 페이드인 → IN~OUT 영상 재생 → OUT~1 영상이 사라지며 사진으로 복귀
-    var IN = 0.14, OUT = 0.88, ZOOM = 1.14;
-    function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
-    function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
-    function blend(p) {
-      // 영상 불투명도 0→1→0, 사진은 확대됐다가(영상 구간엔 확대 유지) 돌아온다
-      var vis, scale;
-      if (p < IN) { vis = ease(clamp01(p / IN)); scale = 1 + (ZOOM - 1) * vis; }
-      else if (p < OUT) { vis = 1; scale = ZOOM; }
-      else { vis = 1 - ease(clamp01((p - OUT) / (1 - OUT))); scale = 1 + (ZOOM - 1) * vis; }
-      video.style.opacity = vis;
-      if (img) { img.style.transform = 'scale(' + scale.toFixed(4) + ')'; img.style.opacity = 1; }
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var connection = navigator.connection;
+    if (reduce.matches || (connection && connection.saveData) || !('currentTime' in video)) {
+      hero.classList.add('is-static');
+      return;
     }
-    function videoProgress(p) { return clamp01((p - IN) / (OUT - IN)); }
 
+    var FPS = 30, SMOOTH_MS = 180;
+    // 전체 스크롤을 늘렸으므로 앞뒤 10%도 종전보다 2배 이상 길다.
+    // 사진 → 첫 프레임으로 천천히 전환 → 영상 → 마지막 프레임에서 사진으로 복귀.
+    var IN = 0.10, OUT = 0.90, ZOOM = 1.14;
+    var target = 0, shown = 0, lastPainted = -1, raf = 0, lastFrame = 0;
+    var ready = false, failed = false, end = 0;
+    var fetching = false, blobUrl = null;
+    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+    function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
     function progress() {
-      var rect = hero.getBoundingClientRect();
-      var track = hero.offsetHeight - window.innerHeight;
-      if (track <= 0) return 0;
-      var p = -rect.top / track;
-      return p < 0 ? 0 : p > 1 ? 1 : p;
+      var track = hero.offsetHeight - stage.offsetHeight;
+      var top = parseFloat(window.getComputedStyle(stage).top) || 0;
+      return track > 0 ? clamp01((top - hero.getBoundingClientRect().top) / track) : 0;
     }
-    function paint() {
+    function seekVideo() {
+      if (!ready || video.readyState < 2 || video.seeking) return;
+      var time = Math.min(end, Math.round(clamp01((shown - IN) / (OUT - IN)) * end * FPS) / FPS);
+      if (Math.abs(video.currentTime - time) >= 0.5 / FPS) video.currentTime = time;
+    }
+    function blend(p) {
+      if (p === lastPainted) return;
+      lastPainted = p;
+      var vis = p < IN ? ease(clamp01(p / IN)) :
+        p < OUT ? 1 : 1 - ease(clamp01((p - OUT) / (1 - OUT)));
+      video.style.opacity = vis;
+      if (img) img.style.transform = 'scale(' + (1 + (ZOOM - 1) * vis).toFixed(4) + ')';
+      if (copy) copy.dataset.hide = (p > IN && p < OUT) ? '1' : '0';
+      if (hint) hint.dataset.hide = p > 0.025 ? '1' : '0';
+    }
+    function frame(now) {
       raf = 0;
       if (!ready) return;
-      // 목표 시간으로 부드럽게 따라간다 (휠 한 칸에 툭툭 끊기지 않게)
-      var diff = target - shown;
-      if (Math.abs(diff) < 1 / 60) { shown = target; }
-      else { shown += diff * 0.22; raf = requestAnimationFrame(paint); }
-      video.currentTime = shown;
+      var elapsed = lastFrame ? Math.min(now - lastFrame, 50) : 1000 / 60;
+      lastFrame = now;
+      // 사진·문구·영상을 같은 진행률로 움직이고 화면 주사율에 관계없이 완충한다.
+      shown += (target - shown) * (1 - Math.exp(-elapsed / SMOOTH_MS));
+      if (Math.abs(target - shown) < 0.00001) shown = target;
+      blend(shown);
+      seekVideo();
+      if (shown !== target) raf = requestAnimationFrame(frame);
+      else lastFrame = 0;
     }
     function onScroll() {
-      var p = progress();
-      if (p === lastP) return;
-      lastP = p;
-      target = videoProgress(p) * duration;
-      blend(p);
-      if (copy) copy.dataset.hide = (p > 0.2 && p < 0.9) ? '1' : '0';
-      if (hint) hint.dataset.hide = p > 0.04 ? '1' : '0';
-      if (!raf) raf = requestAnimationFrame(paint);
+      if (!ready) return;
+      target = progress();
+      if (!raf) raf = requestAnimationFrame(frame);
     }
-    var swapped = false;
-    function seekableEnough() {
-      try { return video.seekable.length > 0 && video.seekable.end(0) >= (video.duration || 10) - 0.5; }
-      catch (e) { return false; }
+    function fallback() {
+      if (failed) return;
+      failed = true;
+      ready = false;
+      cancelAnimationFrame(raf);
+      raf = 0;
+      video.pause();
+      hero.classList.remove('is-video');
+      hero.classList.add('is-static');
+      video.style.opacity = 0;
+      if (img) img.style.transform = '';
+      if (copy) copy.dataset.hide = '0';
+      if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
     }
     function start() {
-      if (ready) return;
-      // Range 요청을 못 받는 서버(단순 정적 서버 등)면 탐색이 안 된다 → 파일을 통째로 받아 blob으로 바꿔 끼운다
-      if (!seekableEnough() && !swapped && window.fetch && window.URL && URL.createObjectURL) {
-        swapped = true;
-        fetch(video.currentSrc || video.src).then(function (r) { return r.blob(); }).then(function (b) {
-          video.src = URL.createObjectURL(b);
-        }, function () { ready = false; });
+      if (ready || failed || fetching || video.readyState < 2 ||
+          !Number.isFinite(video.duration) || video.duration <= 0) return;
+      // Range 미지원 개발 서버에서도 탐색하도록 한 번만 전체 파일을 읽는다.
+      var seekable = video.seekable.length && video.seekable.end(video.seekable.length - 1) >= video.duration - 1 / FPS;
+      if (!seekable && !blobUrl && window.fetch && window.URL && URL.createObjectURL) {
+        fetching = true;
+        fetch(video.currentSrc || video.src).then(function (r) {
+          if (!r.ok) throw new Error('Hero video download failed');
+          return r.blob();
+        }).then(function (b) {
+          fetching = false;
+          if (failed) return;
+          blobUrl = URL.createObjectURL(b);
+          video.src = blobUrl;
+          video.load();
+        }).catch(fallback);
         return;
       }
+      // duration 자체가 아니라 마지막 실제 프레임에서 멈춘다.
+      end = Math.max(0, (Math.round(video.duration * FPS) - 1) / FPS);
       ready = true;
-      duration = video.duration || 10;
       video.pause();
       hero.classList.add('is-video');
-      shown = 0;
-      lastP = -1;
-      onScroll();
+      shown = target = progress();
+      blend(shown);
+      seekVideo();
     }
-    video.addEventListener('loadedmetadata', start);
-    video.addEventListener('error', function () { hero.classList.remove('is-video'); ready = false; });
-    // iOS는 한 번 재생 시도가 있어야 탐색이 매끄럽다
-    var primed = false;
-    function prime() {
-      if (primed) return; primed = true;
-      var p = video.play();
-      if (p && p.then) p.then(function () { video.pause(); }, function () {});
-      else video.pause();
-    }
-    window.addEventListener('touchstart', prime, { once: true, passive: true });
+    video.addEventListener('loadeddata', start);
+    video.addEventListener('canplay', function () { start(); seekVideo(); });
+    // 탐색 중 스크롤이 바뀌어도 완료 직후 최신 목표로 이어서 이동한다.
+    video.addEventListener('seeked', seekVideo);
+    video.addEventListener('error', fallback);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', function () { lastP = -1; onScroll(); });
-    if (video.readyState >= 1) start();
+    window.addEventListener('resize', onScroll);
+    window.addEventListener('pageshow', onScroll);
+    video.src = window.matchMedia('(max-width: 760px)').matches ? hero.dataset.scrubMobile : hero.dataset.scrub;
+    video.load();
   })();
 
   // Copy address

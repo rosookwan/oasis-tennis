@@ -85,11 +85,29 @@ http://localhost:8000/?todo=1
 
 ## 메인 배경 영상 (스크롤 스크럽)
 
-히어로의 영상은 재생되는 게 아니라 마우스 휠·터치 스크롤 양만큼 앞뒤로 움직인다(`index.html`의 `scrubHero`).
-- 섹션 높이 320vh(모바일 260vh) 동안 무대가 화면에 고정되고, 스크롤 진행률 × 10초를 `currentTime`으로 넣는다.
-- 영상은 탐색이 부드럽도록 키프레임 4프레임 간격으로 다시 인코딩했다. 교체할 때는
-  `ffmpeg -i 원본.mp4 -an -c:v libx264 -crf 25 -g 4 -keyint_min 4 -sc_threshold 0 -pix_fmt yuv420p -movflags +faststart assets/video/oasis-hero.mp4`
-  (720p는 `-vf scale=1280:720`). 포스터는 `assets/oasis-hero-poster.jpg`.
-- 서버가 HTTP Range를 못 주면(파이썬 `http.server` 등) 탐색이 안 되므로 스크립트가 파일을 통째로 받아 blob으로 바꿔 끼운다. nginx·GitHub Pages는 Range를 지원한다.
-- `prefers-reduced-motion`이면 스크럽을 끄고 사진 히어로로 보인다. 영상 로드 실패 시에도 사진으로 남는다.
-- `build.mjs`는 mp4를 인라인하지 않는다 — 호스팅된 `dist/artifact.html`에서는 사진 히어로가 보인다.
+히어로는 자동 재생하지 않고 휠·터치 스크롤로 영상을 앞뒤로 탐색합니다(`index.html`의 `scrubHero`).
+
+- 무대는 첫 화면부터 72px 헤더 아래에 고정합니다. 높이는 `100svh - 헤더 - 모바일 하단 CTA`이며, 주소창 변화로 영상이 갑자기 진행되지 않게 안정적인 뷰포트 단위를 사용합니다.
+- 섹션 높이는 데스크톱 900svh, 모바일(760px 이하) 700svh입니다. 앞 10%는 전경 사진에서 영상 첫 프레임으로 페이드인, 가운데 80%는 영상 재생, 뒤 10%는 마지막 프레임에서 전경으로 페이드아웃합니다.
+- 1280×720 기준 실제 진행 거리는 5,832px입니다. 앞뒤 전환은 각각 약 583px(기존 약 222px·190px), 영상은 100px당 약 0.21초(기존 약 0.85초)로 진행합니다. 스크롤을 멈추면 완충 후 정지하므로 고정된 재생 시간으로 전환 길이를 정의하지 않습니다.
+- 영상·사진 확대·문구에 같은 진행률과 180ms 시간 기반 완충을 적용합니다. `seeking` 동안 중복 탐색하지 않고 `seeked` 후 최신 위치로 이동합니다. 30fps에 맞춰 마지막 실제 프레임까지만 탐색하며, 멈추면 애니메이션 루프도 쉽니다.
+- 배포 영상은 10초·30fps H.264, 모든 프레임이 키프레임이며 B프레임이 없습니다. 1080p 약 12.9MB, 720p 약 6.7MB입니다. 기존보다 파일 크기는 늘었지만 임의 프레임 탐색 비용을 줄였습니다. 교체할 때는 원본에서 아래와 같이 인코딩하고 HTML의 영상 URL 버전도 갱신합니다.
+
+```bash
+ffmpeg -i 원본.mp4 -an -c:v libx264 -preset slow -crf 23 -r 30 \
+  -g 1 -keyint_min 1 -sc_threshold 0 -bf 0 -pix_fmt yuv420p \
+  -movflags +faststart assets/video/oasis-hero.mp4
+# 모바일: 위 명령에 -vf scale=1280:720 추가
+```
+
+- HTTP Range 미지원 서버에서 탐색 범위가 열리지 않으면 파일을 한 번 받아 blob으로 전환합니다. GitHub Pages는 Range를 지원합니다.
+- 동작 줄이기·데이터 절약 설정에서는 영상을 요청하지 않습니다. 로드 실패 시 전경 사진으로 돌아가고 긴 스크롤 구간도 해제합니다.
+- `build.mjs`는 mp4를 인라인하지 않습니다. 외부에 올린 `dist/artifact.html`에서는 영상 경로를 제공하지 않으면 사진으로 보입니다.
+
+컨트롤러 회귀 검증(monorepo 루트):
+
+```bash
+node --test scripts/test-oasis-hero.mjs
+```
+
+배포 전에는 데스크톱·375px 모바일·320px 작은 화면에서 최초 위치, 앞/중간/뒤 전환, 역방향 탐색, 하단 CTA 가림 여부와 콘솔 오류를 확인합니다. 배포 후 HTML 및 두 영상 파일의 해시와 HTTP Range 응답을 확인하고 공개 페이지에서 다시 스크롤합니다.
